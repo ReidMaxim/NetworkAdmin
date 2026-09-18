@@ -1,0 +1,167 @@
+Assignment: Deploying and Networking Ubuntu Server 22.04
+Background
+In this lab, we will transition from IT theory to real-world operations by building a fully functional server from scratch. You will use VirtualBox to provision hardware, install a headless Linux operating system, and configure a dual-NIC (Network Interface Card) setup. You will use one adapter for internet access and configure a static IP on the second adapter to create a secure, private management network between your laptop and the server.
+
+Objectives
+By the end of this assignment, you should be able to:
+
+Provision virtual hardware resources for a new virtual server.
+
+Configure a Dual-NIC setup using NAT and Host-Only networking.
+
+Perform a manual installation of a headless server operating system.
+
+Identify multiple network adapters and configure them using Netplan.
+
+Verify network connectivity by remotely connecting to the server via SSH.
+
+Instructions
+Initialize the Virtual Machine
+
+Open VirtualBox.
+
+Click Machine > New from the top menu.
+
+In the Name field, type ServerLab-01-[YourInitials].
+
+Set the Type dropdown to Linux.
+
+Set the Version dropdown to Ubuntu (64-bit).
+
+Important: Check the box that says Skip Unattended Installation.
+
+Click Next.
+
+Allocate Resources
+
+Set Base Memory to 2048 MB.
+
+Set Processors to 2.
+
+Click Next.
+
+Select Create a Virtual Hard Disk Now.
+
+Set the disk size to 20.00 GB.
+
+Click Next, then click Finish.
+
+Configure the Dual Network Adapters
+
+Right-click your new VM in the left menu and select Settings.
+
+Click on the Network tab.
+
+Adapter 1: Ensure "Enable Network Adapter" is checked and "Attached to" is set to NAT. (This provides internet access).
+
+Click the Adapter 2 tab at the top.
+
+Check Enable Network Adapter.
+
+Change "Attached to" to Host-Only Adapter. (This creates our private management network for SSH).
+
+Click OK.
+
+Mount the ISO and Boot
+
+Go to Settings > Storage.
+
+Under "Controller: IDE", click the CD icon labeled Empty.
+
+On the far right side of the window, click the small blue disk icon.
+
+Choose Choose a disk file....
+
+Select the ubuntu-server-22.04.iso file provided in class.
+
+Click the green Start arrow to boot the VM.
+
+Install the OS
+
+Use your arrow keys to select Try or Install Ubuntu Server and press Enter.
+
+Proceed through the installer using these exact settings (leave any unmentioned screens as default and select Done):
+
+Language/Keyboard: English
+
+Network: You will see two interfaces. Leave both as DHCP for now.
+
+Storage: Check "Use an entire disk", then confirm the destructive formatting when prompted.
+
+Profile Setup: Name: Class Admin | Server Name: srv-core-01 | Username: sysadmin | Password: Password123!
+
+Ubuntu Pro: Select "Skip for now".
+
+SSH Setup: Press the Spacebar to check "Install OpenSSH server".
+
+Featured Snaps: Leave all unchecked.
+
+Wait for the "Install complete!" message at the bottom of the screen.
+
+Select Reboot Now (press Enter if prompted to remove the installation media).
+
+Identify Your Network Adapters
+
+Once the server reboots, log in with username sysadmin and password Password123!.
+
+Type ip a and press Enter.
+
+Look at the output. You will see two active network adapters (usually named enp0s3 and enp0s8).
+
+The first one (enp0s3) will have a 10.0.x.x IP address from the NAT connection. The second one (enp0s8) is your Host-Only adapter. Write down the name of the second adapter.
+
+
+
+
+Configure the Static IP
+
+Type sudo nano /etc/netplan/00-installer-config.yaml and press Enter.
+
+Edit the file to configure both adapters.
+
+CRITICAL: Do NOT use the Tab key. Use the Spacebar to create indents.
+
+Replace [ADAPTER_2_NAME] with your second adapter name (e.g., enp0s8). Replace [SEAT_NUMBER] with your physical seat number in the classroom.
+
+YAML
+network:
+  ethernets:
+    enp0s3:
+      dhcp4: true
+    [ADAPTER_2_NAME]:
+      dhcp4: false
+      addresses: [192.168.56.[SEAT_NUMBER]/24]
+  version: 2
+
+Note: We do not put a gateway on Adapter 2, because we want internet traffic to continue flowing out of Adapter 1.
+
+Press Ctrl+O then Enter to save the file.
+
+Press Ctrl+X to exit the text editor.
+
+Type sudo netplan apply and press Enter to push the configuration.
+
+Verify Connectivity
+
+Minimize the VirtualBox window.
+
+Open Command Prompt (Windows) or Terminal (macOS) on your physical host computer.
+
+Type ssh sysadmin@192.168.56.[SEAT_NUMBER] (using the static IP you just assigned).
+
+Press Enter.
+
+Type yes to accept the security fingerprint.
+
+Enter your password. You are now remotely managing your server over your private Host-Only network!
+
+Deliverables
+Create a Word/PDF document containing two screenshots:
+
+A screenshot of your ip a command output on the virtual server, clearly showing both network adapters and your configured 192.168.56.X static IP address.
+
+A screenshot of your host machine's Command Prompt or Terminal showing a successful SSH login prompt indicating you are connected to sysadmin@srv-core-01.
+
+Submit this document to Brightspace.
+
+Rubric
